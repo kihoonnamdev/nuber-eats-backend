@@ -15,7 +15,7 @@ import { User } from './users/entities/user.entity';
 import { UsersModule } from './users/users.module';
 
 import { JwtModule } from './jwt/jwt.module';
-import { jwtMiddleware } from './jwt/jwt.middleware';
+import { JwtMiddleware } from './jwt/jwt.middleware';
 import { CommonModule } from './common/dtos/common.module';
 
 @Module({
@@ -58,4 +58,10 @@ import { CommonModule } from './common/dtos/common.module';
   controllers: [],
   providers: [],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer
+      .apply(JwtMiddleware)
+      .forRoutes({ path: '/graphql', method: RequestMethod.ALL });
+  }
+}
