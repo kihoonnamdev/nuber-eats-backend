@@ -45,7 +45,7 @@ import { CommonModule } from './common/dtos/common.module';
     }),
     UsersModule,
     CommonModule,
-    JwtModule,
+    JwtModule.forRoot(),
   ],
   controllers: [],
   providers: [],
