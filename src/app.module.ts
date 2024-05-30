@@ -16,7 +16,7 @@ import { UsersModule } from './users/users.module';
 
 import { JwtModule } from './jwt/jwt.module';
 import { JwtMiddleware } from './jwt/jwt.middleware';
-import { CommonModule } from './common/dtos/common.module';
+//import { CommonModule } from './common/dtos/common.module';
 import { AuthModule } from './auth/auth.module';
 
 @Module({
