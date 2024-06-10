@@ -15,14 +15,14 @@ const mockRepository = () => ({
   findOneOrFail: jest.fn(),
 });
 
-const mockJwtService = {
+const mockJwtService = () => ({
   sign: jest.fn(),
   verify: jest.fn(),
-};
+});
 
-const mockMailService = {
+const mockMailService = () => ({
   sendVerificationEmail: jest.fn(),
-};
+});
 
 type MockRepository<T = any> = Partial<Record<keyof Repository<T>, jest.Mock>>;
 
@@ -31,7 +31,7 @@ describe('UserService', () => {
   let usersRepository: MockRepository<User>;
   let verificationsRepository: MockRepository<Verification>;
   let mailService: MailService;
-  let jwtService: JwtService;
+  let jwtServiceMock: jest.Mocked<JwtService>;
 
   beforeEach(async () => {
     const module = await Test.createTestingModule({
@@ -47,17 +47,19 @@ describe('UserService', () => {
         },
         {
           provide: JwtService,
-          useValue: mockJwtService,
+          useValue: mockJwtService(),
         },
         {
           provide: MailService,
-          useValue: mockMailService,
+          useValue: mockMailService(),
         },
       ],
     }).compile();
     service = module.get<UserService>(UserService);
     mailService = module.get<MailService>(MailService);
-    jwtService = module.get<JwtService>(JwtService);
+    jwtServiceMock = module.get<JwtService>(
+      JwtService,
+    ) as jest.Mocked<JwtService>;
     usersRepository = module.get(getRepositoryToken(User));
     verificationsRepository = module.get(getRepositoryToken(Verification));
   });
@@ -161,12 +163,12 @@ describe('UserService', () => {
 
       // Mock sign method of JwtService to return a token
       const token = 'signed-token-baby';
-      mockJwtService.sign.mockReturnValue(token);
+      jwtServiceMock.sign.mockReturnValue(token);
 
       const result = await service.login(loginArgs);
       console.log(result);
-      expect(jwtService.sign).toHaveBeenCalledTimes(1);
-      expect(jwtService.sign).toHaveBeenCalledWith(expect.any(Number));
+      expect(jwtServiceMock.sign).toHaveBeenCalledTimes(1);
+      expect(jwtServiceMock.sign).toHaveBeenCalledWith(expect.any(Number));
       //expect(result).toEqual({ ok: true, token: 'signed-token-baby' });
       expect(result).toEqual({ ok: true, token });
     });
@@ -230,10 +232,32 @@ describe('UserService', () => {
         newVerification,
       );
 
+      expect(mailService.sendVerificationEmail).toHaveBeenCalledTimes(1);
       expect(mailService.sendVerificationEmail).toHaveBeenCalledWith(
         newUser.email,
         newVerification.code,
       );
+    });
+
+    it('should change password', async () => {
+      const editProfileArgs = {
+        userId: 1,
+        input: { password: 'new.password' },
+      };
+      usersRepository.findOne.mockResolvedValue({ password: 'old' });
+      const result = await service.editProfile(
+        editProfileArgs.userId,
+        editProfileArgs.input,
+      );
+      expect(usersRepository.save).toHaveBeenCalledTimes(1);
+      expect(usersRepository.save).toHaveBeenCalledWith(editProfileArgs.input);
+      expect(result).toEqual({ ok: true });
+    });
+
+    it('should fail on exception', async () => {
+      usersRepository.findOne.mockRejectedValue(new Error());
+      const result = await service.editProfile(1, { email: '12' });
+      expect(result).toEqual({ ok: false, error: 'Could not update profile.' });
     });
   });
 
