@@ -22,6 +22,7 @@ import { Verification } from './users/entities/verification.entity';
 import { MailModule } from './mail/mail.module';
 import { Restaurant } from './restaurants/entities/restaurant.entity';
 import { Category } from './restaurants/entities/category.entity';
+import { RestaurantsModule } from './restaurants/restaurants.module';
 
 @Module({
   imports: [
@@ -59,7 +60,6 @@ import { Category } from './restaurants/entities/category.entity';
       autoSchemaFile: true,
       context: ({ req }) => ({ user: req['user'] }),
     }),
-    UsersModule,
     JwtModule.forRoot({
       privateKey: process.env.PRIVATE_KEY,
     }),
@@ -69,6 +69,8 @@ import { Category } from './restaurants/entities/category.entity';
       fromEmail: process.env.MAILGUN_FROM_EMAIL,
     }),
     AuthModule,
+    UsersModule,
+    RestaurantsModule,
   ],
   controllers: [],
   providers: [],
